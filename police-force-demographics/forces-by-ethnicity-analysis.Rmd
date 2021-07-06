@@ -1,0 +1,158 @@
+---
+title: "forces-by-ethnicity"
+author: "George WIlloughby"
+date: "10/06/2021"
+output: html_document
+---
+
+# Loading the data
+
+The first thing we are going to do is load the data tables provided by the home office. To access these, you can follow this [link](https://www.gov.uk/government/statistics/police-workforce-open-data-tables#history). We are looking for the *ethnicity open data tables* which breaks down each police force area by year, gender, rank, role and ethnicity. We will call our new sheet **ethnicity_data_tables**
+
+```{r}
+#Loading the data 
+ethnicity_data_tables <- read.csv("data-table-forces-ethnicity.csv", header=T, na.strings=c("","NA"))
+
+ethnicity_data_tables
+```
+
+
+# Changing the column names
+
+Once you have viewed the data, you will probably see that it needs a little cleaning. Firstly, we can change the column headers to make them a bit more readable. After that, we can remove a few columns that we don't need.
+
+```{r}
+library(dplyr)
+
+ethnicity_data_tables <- ethnicity_data_tables %>%
+  rename(
+    as_at_31_march = As.at.31.March,
+    geo_code = Geo.code,
+    force = Force.Name,
+    region = Region,
+    sex = Sex,
+    rank = Rank.description,
+    role = Worker.type,
+    ethnicity = Ethnicity,
+    ethnic_group = Ethnic.group,
+    total_headcount = Total..headcount.,
+    total_full_time_equivalent = Total..FTE.
+  )
+
+#Selecting the columns we want to keep by index number
+ethnicity_data_tables <- ethnicity_data_tables[c(1:11)]
+
+ethnicity_data_tables
+```
+
+# Further cleaning
+
+Some police forces might not have a certain ethnicity for a specific officer role. In the data, it is currently shown as an '-'. Let's replace it with a zero.
+
+
+```{r}
+#View the years in the dataframe
+unique(ethnicity_data_tables$as_at_31_march)
+
+#Make cells with a '-' an N/A
+ethnicity_data_tables$total_headcount[ethnicity_data_tables$total_headcount == "-"] <- NA
+
+ethnicity_data_tables
+```
+
+# A closer look at the latest figures
+
+Now that the data has been cleaned up a bit, let's start to take a closer look at the most recent year. To look at just the 2020 figures, we are going to create a new variable so name it accordingly. In this instance, let's go with *ethnicity_data_tables_2020*. 
+
+
+```{r}
+#New variable for 2020 figures
+ethnicity_data_tables_2020 <- ethnicity_data_tables[ethnicity_data_tables$as_at_31_march >= "2020" & ethnicity_data_tables$as_at_31_march <= "2020",]
+
+ethnicity_data_tables_2020
+```
+
+# Selecting individual forces 
+
+To make analysing each force easier, we can select one force at a time. To do this, wan use the filter tool. The main reason why we want to do this is because we will need to calculate some text values using dplyr() later on and we don't want any potential figures that includes more than one force.
+
+```{r}
+library(dplyr)
+#View the police force names
+unique(ethnicity_data_tables_2020$force)
+
+#Creating a new variable for a specific force
+cheshire2020 <- filter(ethnicity_data_tables_2020, force == "Cheshire")
+
+#View the individual force
+cheshire2020
+```
+
+
+# Removing unwanted police ranks
+
+The purpose of this analysis is to look at police in officer roles. This means we need to remove any administrative roles and also PCSO positions. Based off FOI request, the officer positions are as follows: National Police Chiefs Council,	Chief Superintendent, 	Superintendent, 	Chief Inspector, 	Inspector	Sergeant 	Constable.
+
+```{r}
+#Look at the officer roles in our dataset
+unique(cheshire2020$rank)
+
+library(dplyr)
+#Dropping unwanted ranks
+cheshire2020 <- subset(cheshire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(cheshire2020$rank)
+```
+```{r}
+#Repeating the same process for a different force
+
+#Creating a new variable for a specific force
+gloucester2020 <- filter(ethnicity_data_tables_2020, force == "Gloucestershire")
+
+#View the individual force
+gloucester2020
+
+library(dplyr)
+#Dropping unwanted ranks
+gloucester2020 <- subset(gloucester2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(gloucester2020$rank)
+```
+
+```{r}
+#Repeating the same process for a different force
+
+#Creating a new variable for a specific force
+warwickshire2020 <- filter(ethnicity_data_tables_2020, force == "Warwickshire")
+
+#View the individual force
+warwickshire2020
+
+library(dplyr)
+#Dropping unwanted ranks
+warwickshire2020 <- subset(warwickshire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(warwickshire2020$rank)
+```
+
+
+#Exporting the data
+
+In terms of analysis, we are at a stage now where we can export. We have the most up to date year, we have a script that narrows down to an individual force and some simple filtering in excel is the only thing required post export. To alter the script so that you can look at othet forces, simply change the force filter in the **Selecting individual forces** section to the one the one you want to look at.
+
+```{r}
+#Exporting as a CSV file
+write.csv(cheshire2020, "cheshire-police-force-breakdown.csv")
+write.csv(gloucester2020, "gloucester-police-force-breakdown.csv")
+write.csv(warwickshire2020, "warwickshire-police-force-breakdown.csv")
+```
+
+
+
+
+
+
+
