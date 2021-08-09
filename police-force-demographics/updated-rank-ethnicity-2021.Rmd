@@ -1,0 +1,111 @@
+---
+title: "updated-rank-ethnicity"
+author: "George WIlloughby"
+date: "30/07/2021"
+output: html_document
+---
+
+# Loading the data 
+
+New data was released (July 28) detailing the specific breakdown of ranks and roles in the 43 police forces in England and Wales. The aim of this markdown is to do some simple cleaning and prepare a dataset ready for filtering in Google Sheets. The end point is a dataset where we can just change the force name and ethnicity.
+
+```{r}
+ethnicity_rank_2021 <- read.csv("updated-police-workforce-ethnicity.csv")
+
+ethnicity_rank_2021
+```
+
+
+# Changing the column names
+
+The first thing to do is change the column header names to make them easier to understand.
+
+```{r}
+#Load library
+library(dplyr)
+
+#Check the column names
+colnames(ethnicity_rank_2021)
+
+#Rename columns
+ethnicity_rank_2021 <- ethnicity_rank_2021 %>%
+  rename(
+    as_at_31_march = As.at.31.March...,
+    geo_code = Geo.code,
+    force = Force.Name,
+    region = Region,
+    sex = Gender,
+    rank = Rank.description,
+    role = Worker.type,
+    ethnicity = Ethnicity,
+    ethnic_group = Ethnic.group,
+    total_headcount = Total..headcount.,
+    total_full_time_equivalent = Total..FTE.
+  )
+#Check changes
+colnames(ethnicity_rank_2021)
+```
+
+# Cleaning the columns
+
+The next part of the cleaning process is to select the columns we want to use in our dataset. There are some we don't need as the focus is **police officers** only. This first step is only the start as we will be pulling specific ranks and roles later on in the script.
+
+```{r}
+#Selecting columns
+ethnicity_rank_2021 <- ethnicity_rank_2021[c(1:8,10)]
+
+ethnicity_rank_2021
+```
+
+
+# Removing unwanted ranks and roles
+
+The purpose of this analysis is to look at police in officer roles. This means we need to remove any administrative roles and also PCSO positions. The officer positions are as follows: National Police Chiefs Council *(NPCC)*,	Chief Superintendent, 	Superintendent, 	Chief Inspector, 	Inspector	Sergeant 	Constable. *NPCC* is also Chief Officer which is what the rank is referred to in the raw data.
+
+You will see then when you drop the ranks, it will also remove the part-time roles in the force. This is what we need as in the **role** columns, we only want **Police Officer**
+
+```{r}
+#Look at the officer roles in our dataset
+unique(ethnicity_rank_2021$rank)
+
+library(dplyr)
+#Dropping unwanted ranks
+ethnicity_rank_2021 <- subset(ethnicity_rank_2021, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer" & rank!= "Special Constable")
+
+#Dropping unwanted roles
+ethnicity_rank_2021 <- subset(ethnicity_rank_2021, role!= "Police Support Volunteer")
+
+#Check the results
+unique(ethnicity_rank_2021$rank)
+```
+
+# Selectng 2021
+
+To help with analysis, one last optional code we are going to run is to remove all the years we don't want. The aim is to end up with just the rank figures for 2021, but, having data for all the years is useful so on this occasion, we will save a nee variable.
+
+```{r}
+#New variable for 2021 figures
+latest_year_ethnicity_rank_2021 <- ethnicity_rank_2021[ethnicity_rank_2021$as_at_31_march >= "2021" & ethnicity_rank_2021$as_at_31_march <= "2021",]
+
+latest_year_ethnicity_rank_2021
+```
+
+
+
+
+# Selecting an indvidual force
+
+In terms of cleaning, we have finished in R. We can now export the dataset and continue analysing the figures in a spreadsheet tool. 
+
+```{r}
+#Export file
+write.csv(ethnicity_rank_2021, "updated-rank-ethnicity-figures-2021.csv")
+#Latest year file
+write.csv(latest_year_ethnicity_rank_2021, "latest-year-ethnicity-rank-forces-2021.csv")
+```
+
+
+
+
+
+
