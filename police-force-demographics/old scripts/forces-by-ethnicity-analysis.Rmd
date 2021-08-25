@@ -1,0 +1,524 @@
+---
+title: "forces-by-ethnicity"
+author: "George WIlloughby"
+date: "10/06/2021"
+output: html_document
+---
+
+# Loading the data
+
+The first thing we are going to do is load the data tables provided by the home office. To access these, you can follow this [link](https://www.gov.uk/government/statistics/police-workforce-open-data-tables#history). We are looking for the *ethnicity open data tables* which breaks down each police force area by year, gender, rank, role and ethnicity. We will call our new sheet **ethnicity_data_tables**
+
+```{r}
+#Loading the data 
+ethnicity_data_tables <- read.csv("data-table-forces-ethnicity.csv", header=T, na.strings=c("","NA"))
+
+ethnicity_data_tables
+```
+
+
+# Changing the column names
+
+Once you have viewed the data, you will probably see that it needs a little cleaning. Firstly, we can change the column headers to make them a bit more readable. After that, we can remove a few columns that we don't need.
+
+```{r}
+library(dplyr)
+
+ethnicity_data_tables <- ethnicity_data_tables %>%
+  rename(
+    as_at_31_march = As.at.31.March,
+    geo_code = Geo.code,
+    force = Force.Name,
+    region = Region,
+    sex = Sex,
+    rank = Rank.description,
+    role = Worker.type,
+    ethnicity = Ethnicity,
+    ethnic_group = Ethnic.group,
+    total_headcount = Total..headcount.,
+    total_full_time_equivalent = Total..FTE.
+  )
+
+#Selecting the columns we want to keep by index number
+ethnicity_data_tables <- ethnicity_data_tables[c(1:11)]
+
+ethnicity_data_tables
+```
+
+# Further cleaning
+
+Some police forces might not have a certain ethnicity for a specific officer role. In the data, it is currently shown as an '-'. Let's replace it with a zero.
+
+
+```{r}
+#View the years in the dataframe
+unique(ethnicity_data_tables$as_at_31_march)
+
+#Make cells with a '-' an N/A
+ethnicity_data_tables$total_headcount[ethnicity_data_tables$total_headcount == "-"] <- NA
+
+ethnicity_data_tables
+```
+
+# A closer look at the latest figures
+
+Now that the data has been cleaned up a bit, let's start to take a closer look at the most recent year. To look at just the 2020 figures, we are going to create a new variable so name it accordingly. In this instance, let's go with *ethnicity_data_tables_2020*. 
+
+
+```{r}
+#New variable for 2020 figures
+ethnicity_data_tables_2020 <- ethnicity_data_tables[ethnicity_data_tables$as_at_31_march >= "2020" & ethnicity_data_tables$as_at_31_march <= "2020",]
+
+ethnicity_data_tables_2020
+```
+
+# Selecting individual forces 
+
+To make analysing each force easier, we can select one force at a time. To do this, wan use the filter tool. The main reason why we want to do this is because we will need to calculate some text values using dplyr() later on and we don't want any potential figures that includes more than one force.
+
+```{r}
+library(dplyr)
+#View the police force names
+unique(ethnicity_data_tables_2020$force)
+
+#Creating a new variable for a specific force
+cheshire2020 <- filter(ethnicity_data_tables_2020, force == "Cheshire")
+
+#View the individual force
+cheshire2020
+```
+
+
+# Removing unwanted police ranks
+
+The purpose of this analysis is to look at police in officer roles. This means we need to remove any administrative roles and also PCSO positions. Based off FOI request, the officer positions are as follows: National Police Chiefs Council,	Chief Superintendent, 	Superintendent, 	Chief Inspector, 	Inspector	Sergeant 	Constable.
+
+```{r}
+#Look at the officer roles in our dataset
+unique(cheshire2020$rank)
+
+library(dplyr)
+#Dropping unwanted ranks
+cheshire2020 <- subset(cheshire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(cheshire2020$rank)
+```
+```{r}
+#Repeating the same process for a different force
+
+#Creating a new variable for a specific force
+gloucester2020 <- filter(ethnicity_data_tables_2020, force == "Gloucestershire")
+
+#View the individual force
+gloucester2020
+
+library(dplyr)
+#Dropping unwanted ranks
+gloucester2020 <- subset(gloucester2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(gloucester2020$rank)
+```
+
+```{r}
+#Repeating the same process for a different force
+
+#Creating a new variable for a specific force
+warwickshire2020 <- filter(ethnicity_data_tables_2020, force == "Warwickshire")
+
+#View the individual force
+warwickshire2020
+
+library(dplyr)
+#Dropping unwanted ranks
+warwickshire2020 <- subset(warwickshire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(warwickshire2020$rank)
+```
+
+```{r}
+#Repeating the same process for a different force
+
+#Creating a new variable for a specific force
+lancashire2020 <- filter(ethnicity_data_tables_2020, force == "Lancashire")
+
+#View the individual force
+lancashire2020
+
+library(dplyr)
+#Dropping unwanted ranks
+lancashire2020 <- subset(lancashire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(lancashire2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+leicestershire2020 <- filter(ethnicity_data_tables_2020, force == "Leicestershire")
+
+#View the individual force
+leicestershire2020
+
+library(dplyr)
+#Dropping unwanted ranks
+leicestershire2020 <- subset(leicestershire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(leicestershire2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+humberside2020 <- filter(ethnicity_data_tables_2020, force == "Humberside")
+
+#View the individual force
+humberside2020
+
+library(dplyr)
+#Dropping unwanted ranks
+humberside2020 <- subset(humberside2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(humberside2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+city_of_london_2020 <- filter(ethnicity_data_tables_2020, force == "London, City of")
+
+#View the individual force
+city_of_london_2020
+
+library(dplyr)
+#Dropping unwanted ranks
+city_of_london_2020 <- subset(city_of_london_2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(city_of_london_2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+cumbria2020 <- filter(ethnicity_data_tables_2020, force == "Cumbria")
+
+#View the individual force
+cumbria2020
+
+library(dplyr)
+#Dropping unwanted ranks
+cumbria2020 <- subset(cumbria2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(cumbria2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+west_midlands2020 <- filter(ethnicity_data_tables_2020, force == "West Midlands")
+
+#View the individual force
+west_midlands2020
+
+library(dplyr)
+#Dropping unwanted ranks
+west_midlands2020 <- subset(west_midlands2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(west_midlands2020$rank)
+```
+
+
+```{r}
+#Creating a new variable for a specific force
+hertfordshire2020 <- filter(ethnicity_data_tables_2020, force == "Hertfordshire")
+
+#View the individual force
+hertfordshire2020
+
+library(dplyr)
+#Dropping unwanted ranks
+hertfordshire2020 <- subset(hertfordshire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(hertfordshire2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+bedfordshire2020 <- filter(ethnicity_data_tables_2020, force == "Bedfordshire")
+
+#View the individual force
+bedfordshire2020
+
+library(dplyr)
+#Dropping unwanted ranks
+bedfordshire2020 <- subset(bedfordshire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(bedfordshire2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+south_yorkshire2020 <- filter(ethnicity_data_tables_2020, force == "South Yorkshire")
+
+#View the individual force
+south_yorkshire2020
+
+library(dplyr)
+#Dropping unwanted ranks
+south_yorkshire2020 <- subset(south_yorkshire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(south_yorkshire2020$rank)
+```
+```{r}
+#Creating a new variable for a specific force
+dyfed_powys2020 <- filter(ethnicity_data_tables_2020, force == "Dyfed-Powys")
+
+#View the individual force
+dyfed_powys2020
+
+library(dplyr)
+#Dropping unwanted ranks
+dyfed_powys2020 <- subset(dyfed_powys2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(dyfed_powys2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+lincolnshire2020 <- filter(ethnicity_data_tables_2020, force == "Lincolnshire")
+
+#View the individual force
+lincolnshire2020
+
+library(dplyr)
+#Dropping unwanted ranks
+lincolnshire2020 <- subset(lincolnshire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(lincolnshire2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+merseyside2020 <- filter(ethnicity_data_tables_2020, force == "Merseyside")
+
+#View the individual force
+merseyside2020
+
+library(dplyr)
+#Dropping unwanted ranks
+merseyside2020 <- subset(merseyside2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(merseyside2020$rank)
+```
+
+
+```{r}
+#Creating a new variable for a specific force
+kent2020 <- filter(ethnicity_data_tables_2020, force == "Kent")
+
+#View the individual force
+kent2020
+
+library(dplyr)
+#Dropping unwanted ranks
+kent2020 <- subset(kent2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(kent2020$rank)
+```
+```{r}
+#Creating a new variable for a specific force
+staffordshire2020 <- filter(ethnicity_data_tables_2020, force == "Staffordshire")
+
+#View the individual force
+staffordshire2020
+
+library(dplyr)
+#Dropping unwanted ranks
+staffordshire2020 <- subset(staffordshire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(staffordshire2020$rank)
+```
+```{r}
+#Creating a new variable for a specific force
+west_mercia2020 <- filter(ethnicity_data_tables_2020, force == "West Mercia")
+
+#View the individual force
+west_mercia2020
+
+library(dplyr)
+#Dropping unwanted ranks
+west_mercia2020 <- subset(west_mercia2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(west_mercia2020$rank)
+```
+```{r}
+#Creating a new variable for a specific force
+sussex2020 <- filter(ethnicity_data_tables_2020, force == "Sussex")
+
+#View the individual force
+sussex2020
+
+library(dplyr)
+#Dropping unwanted ranks
+sussex2020 <- subset(sussex2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(sussex2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+northamptonshire2020 <- filter(ethnicity_data_tables_2020, force == "Northamptonshire")
+
+#View the individual force
+northamptonshire2020
+
+library(dplyr)
+#Dropping unwanted ranks
+northamptonshire2020 <- subset(northamptonshire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(northamptonshire2020$rank)
+```
+```{r}
+#Creating a new variable for a specific force
+gwent2020 <- filter(ethnicity_data_tables_2020, force == "Gwent")
+
+#View the individual force
+gwent2020
+
+library(dplyr)
+#Dropping unwanted ranks
+gwent2020 <- subset(gwent2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(gwent2020$rank)
+```
+```{r}
+#Creating a new variable for a specific force
+essex2020 <- filter(ethnicity_data_tables_2020, force == "Essex")
+
+#View the individual force
+essex2020
+
+library(dplyr)
+#Dropping unwanted ranks
+essex2020 <- subset(essex2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(essex2020$rank)
+```
+```{r}
+#Creating a new variable for a specific force
+cleveland2020 <- filter(ethnicity_data_tables_2020, force == "Cleveland")
+
+#View the individual force
+cleveland2020
+
+library(dplyr)
+#Dropping unwanted ranks
+cleveland2020 <- subset(cleveland2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(cleveland2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+cambridgeshire2020 <- filter(ethnicity_data_tables_2020, force == "Cambridgeshire")
+
+#View the individual force
+cambridgeshire2020
+
+library(dplyr)
+#Dropping unwanted ranks
+cambridgeshire2020 <- subset(cambridgeshire2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(cambridgeshire2020$rank)
+```
+```{r}
+#Creating a new variable for a specific force
+norfolk2020 <- filter(ethnicity_data_tables_2020, force == "Norfolk")
+
+#View the individual force
+norfolk2020
+
+library(dplyr)
+#Dropping unwanted ranks
+norfolk2020 <- subset(norfolk2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(norfolk2020$rank)
+```
+
+```{r}
+#Creating a new variable for a specific force
+thamesvalley2020 <- filter(ethnicity_data_tables_2020, force == "Thames Valley")
+
+#View the individual force
+thamesvalley2020
+
+library(dplyr)
+#Dropping unwanted ranks
+thamesvalley2020 <- subset(thamesvalley2020, rank!="Designated Detention Officer (S.38)" & rank!="Community Support Officer" & rank!="Designated Detention Officer (S.39)" & rank!= "Designated Escort Officer (S.38)" & rank!="Designated Escort Officer (S.39)" & rank!= "Designated Investigation Officer (S.38)" & rank!="Police Staff" & rank!="Police support volunteer")
+
+#Check the results
+unique(thamesvalley2020$rank)
+```
+
+
+
+
+#Exporting the data
+
+In terms of analysis, we are at a stage now where we can export. We have the most up to date year, we have a script that narrows down to an individual force and some simple filtering in excel is the only thing required post export. To alter the script so that you can look at othet forces, simply change the force filter in the **Selecting individual forces** section to the one the one you want to look at.
+
+```{r}
+#Exporting as a CSV file
+write.csv(cheshire2020, "cheshire-police-force-breakdown.csv")
+write.csv(gloucester2020, "gloucester-police-force-breakdown.csv")
+write.csv(warwickshire2020, "warwickshire-police-force-breakdown.csv")
+write.csv(lancashire2020,"lancashire-police-force-breakdown.csv")
+write.csv(leicestershire2020,"leicestershire-police-force-breakdown.csv")
+write.csv(humberside2020, "humberside-police-fore-breakdown.csv")
+write.csv(city_of_london_2020, "city-of-london-police-force-breakdown.csv")
+write.csv(cumbria2020, "cumbria-police-force-breakdown.csv")
+write.csv(west_midlands2020, "west-midlands-police-force-breakdown.csv")
+write.csv(hertfordshire2020, "hertfordshire-police-force-breakdown.csv")
+write.csv(bedfordshire2020, "bedfordshire-police-force-breakdown.csv")
+write.csv(south_yorkshire2020, "south-yorkshire-police-force-breakdown.csv")
+write.csv(dyfed_powys2020, "dyfed-powys-police-force-breakdown.csv")
+write.csv(lincolnshire2020, "lincolnshire-police-force-breakdown.csv")
+write.csv(merseyside2020, "merseyside-police-force-breakdown.csv")
+write.csv(kent2020, "kent-police-force-breakdown.csv")
+write.csv(staffordshire2020, "staffordshire-police-force-breakdown.csv")
+write.csv(west_mercia2020, "west-mercia-police-force-breakdown.csv")
+write.csv(sussex2020, "sussex-police-force-breakdown.csv")
+write.csv(northamptonshire2020, "northamptonshire-police-force-breakdown.csv")
+write.csv(gwent2020, "gwent-police-force-breakdown.csv")
+write.csv(essex2020, "essex-police-force-breakdown.csv")
+write.csv(cleveland2020, "cleveland-police-force-breakdown.csv")
+write.csv(cambridgeshire2020, "cambridgeshire-police-force-breakdown.csv")
+write.csv(norfolk2020, "norfolk-police-force-breakdown.csv")
+write.csv(thamesvalley2020, "thames-valley-police-force-breakdown.csv")
+```
+
+
+
+cambridgeshire2020
+
+
+
