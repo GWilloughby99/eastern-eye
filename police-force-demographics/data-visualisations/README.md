@@ -14,7 +14,7 @@
   <img src="/police-force-demographics/data-visualisations/final-struggle-uplift.png">
 
 **Evaluating Operation Uplift**
-  <img src="/police-force-demographics/data-visualisations/uplift-by-workforce table.png">
+  <img src="/police-force-demographics/data-visualisations/uplift-scatter.png">
 
 <hr>
 
