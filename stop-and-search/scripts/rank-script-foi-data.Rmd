@@ -1,0 +1,330 @@
+---
+title: "rank-script-foi-data"
+author: "George WIlloughby"
+date: "18/08/2021"
+output: html_document
+---
+
+# Loading the data
+
+The first step is to load the data which we will do using the read.csv() function. Make sure to choose a suitable new variable name
+
+```{r}
+#Loading the data
+raw_chief_officer_figures <- read.csv("chief-officer-latest.csv")
+```
+
+# Changing columns names
+
+One of the first steps in the cleaning phase is to address the column names. After inspecting the data set, you should be able to see that there are certain columns that could pose some problems later on. This is particularly referring to **As.at.31.March..., Total..headcount. and Total..FTE.** - the dots are there because of the spaces. Let's rename these, and the other columns where necessary.
+
+```{r}
+#Check column names
+colnames(raw_chief_officer_figures)
+
+#Renaming columns
+library(dplyr)
+raw_chief_officer_figures <- raw_chief_officer_figures %>%
+  rename(
+    date = As.at.31.March...,
+    code = Geo.code,
+    force = Force.Name,
+    region = Region,
+    gender = Gender,
+    rank = Rank.description,
+    role = Worker.type,
+    ethnicity = Ethnicity,
+    ethnic_group = Ethnic.group,
+    total_headcount = Total..headcount.,
+    total_headcount_full_time = Total..FTE.
+  )
+```
+
+# Check the column name changes
+Because we ran the above code, we can't simply run the same code block because the column names have been changed. To quickly check the changes, run colnames() again like so.
+
+```{r}
+#Checking to see the changes
+colnames(raw_chief_officer_figures)
+```
+# Cleaning the columns
+
+Step two of the cleaning is to look at the columns themselves. There are some we don't need and can remove them by selecting the ones we want to keep. To do this, we can pick the columns by their index number. You might have already seen this, but after running colnames(), a little number in a square appears on the right. It looks like this [1]. These are the column index numbers and knowing these are useful in the next step. We are going to remove **code, role and total head_headcount** because they are columns we won't be needing on this occasion. We are getting rid of the total_headcount column because we only want officers working full-time.
+
+```{r}
+#Checking the variable
+raw_chief_officer_figures <- raw_chief_officer_figures[c(1,3:6,8,9,11)]
+
+raw_chief_officer_figures
+```
+
+# Adjusting the headcount column
+
+## Due to the '-' in the data, the headcount column is showing as a character. We can begin by changing this into numeric, and then we change the N/A values into 0. Let's do this now.
+
+```{r}
+#Changing the headcount column into numeric
+raw_chief_officer_figures$total_headcount_full_time <- as.numeric(as.character(raw_chief_officer_figures$total_headcount_full_time))
+
+#Check results
+raw_chief_officer_figures
+
+#Checking for any NA values
+sum(is.na(raw_chief_officer_figures$total_headcount_full_time))
+
+#If there are any NA values, run the code below and that should convert them into zero values
+#chief_officer_rank$total_headcount_full_time[is.na(chief_officer_rank$total_headcount_full_time)] <- 0
+
+#Checking the results
+#sum(is.na(chief_officer_rank$total_headcount_full_time))
+
+```
+
+# Calculating the yearly figures
+
+Using the dplyr() function, we can figure out the yearly figures for how many chief officers there have been each year by ethnicity.
+
+```{r}
+#Library load
+library(dplyr)
+
+#Sum from 2003 for all forces
+sum_chief_officer_rank <- raw_chief_officer_figures %>%
+  group_by(ethnicity) %>%
+  summarise(yearly_sum = sum(total_headcount_full_time))
+
+#Check results
+sum_chief_officer_rank
+```
+
+# Filtering just for the specific ethnicities
+
+To continue the analysis, we are going to filter the data once again. This time, we want to make a new variable that has the data just for each of the ethnicities in the **ethnicity** column.
+
+```{r}
+#Load library
+library(dplyr)
+unique(raw_chief_officer_figures$ethnicity)
+
+#Filter for Asian communities 
+asian_chief_officers <- filter(raw_chief_officer_figures, ethnicity == "Asian or Asian British")
+
+#Check results
+asian_chief_officers
+
+
+#Filter for Black ethnicity
+black_chief_officers <- filter(raw_chief_officer_figures, ethnicity == "Black or Black British")
+
+#Check results
+black_chief_officers
+
+
+#Filter for white ethnicity
+white_chief_officers <- filter(raw_chief_officer_figures, ethnicity == "White")
+
+#Check results
+white_chief_officers
+
+
+#Filter for mixed ethnicity
+mixed_chief_officers <- filter(raw_chief_officer_figures, ethnicity == "Mixed")
+```
+
+# Calculating Asian figures by year
+
+```{r}
+#Library
+library(dplyr)
+
+rm(asian_black_officers_combined)
+
+#Yearly sum
+asian_chief_officers <- asian_chief_officers %>%
+  group_by(date) %>%
+  summarise(yearly_sum_asian_chief_officers = sum(total_headcount_full_time))
+
+#Yearly sum
+black_chief_officers <- black_chief_officers %>%
+  group_by(date) %>%
+  summarise(yearly_sum_black_chief_officers = sum(total_headcount_full_time))
+
+#Yearly sum
+white_chief_officers <- white_chief_officers %>%
+  group_by(date) %>%
+  summarise(yearly_sum_white_chief_officers = sum(total_headcount_full_time))
+
+#Yearly sum
+mixed_chief_officers <- mixed_chief_officers %>%
+  group_by(date) %>%
+  summarise(yearly_sum_mixed_chief_officers = sum(total_headcount_full_time))
+```
+
+# Merging the findings
+
+Now we have the figures for the ethnicities, we can merge them together to from one data frame. This will be useful for the data visualisation that will show over time how many chief officers there have each year. The merge() function in R will allow us to do this but, you can only merge two varaibles at a time. That is why we will have to run it twice for the four ethnicities we have.
+
+```{r}
+#Merging Asian and Black chief officers
+asian_black_officers_combined <- merge(asian_chief_officers, black_chief_officers, by="date")
+
+#Check results
+asian_black_officers_combined
+
+#Merging White and Mixed chief officers
+white_mixed_officers_combined <- merge(white_chief_officers, mixed_chief_officers, by="date")
+
+#Check results
+white_mixed_officers_combined
+
+#Merging the two new data frames together to make a final version
+ethncities_combined <- merge(asian_black_officers_combined, white_mixed_officers_combined, by="date")
+
+#Check results
+ethncities_combined
+```
+
+# Data visualisation
+
+To see the findings, we can quickly create a line chart using the ggplot2() package.
+
+```{r}
+#Library load
+library(ggplot2)
+
+#Creating the line chart
+line_chart <- ggplot(ethncities_combined, aes(x = date)) +
+  geom_line(aes(y = yearly_sum_asian_chief_officers), color = "red") +
+  geom_line(aes(y = yearly_sum_white_chief_officers), color = "grey") +
+  labs(y="number of chief officers",
+       x="year")
+
+  
+line_chart
+```
+
+# Deciding between ethnicity or ethnic group
+
+The next step is a subjective one. If you want to keep the breakdown of the ethnicity then you don't have to run the upcoming code block. We are going to remove the **ethnicity** column so that we are just left with **ethnic_group**. This is because in the the ethnic_group column, ethnic minority officers are brought together by **Black, Asian and Minority Ethnic** (BAME)
+
+```{r}
+#Activate the library
+library(dplyr)
+
+#Check column index numbers
+colnames(raw_chief_officer_figures)
+
+#Removing the ethnicity column
+no_breakdown_chief_officer_rank <- raw_chief_officer_figures[c(1:5,7:8)]
+
+#Check the changes
+no_breakdown_chief_officer_rank
+```
+
+#Filtering again
+
+```{r}
+#Filter for BAME groups
+
+#Filter for Asian communities 
+bame_chief_officers <- filter(raw_chief_officer_figures, ethnic_group == "Black, Asian and Minority Ethnic")
+
+#Check results
+bame_chief_officers
+
+#Calculating yearly figures
+bame_chief_officers <- bame_chief_officers %>%
+  group_by(date) %>%
+  summarise(yearly_bame_chief_officers = sum(total_headcount_full_time))
+
+
+# Merging one last time to add the BAME chief officer column to the combined ethnicity dataframe
+final_yearly_chief_officer <- merge(ethncities_combined, bame_chief_officers, by="date")
+
+#Check results
+final_yearly_chief_officer
+```
+
+
+# Exporting the findings
+
+Now we cleaned and analysed the data, we can export the file and do some final edits in Excel.
+
+```{r}
+write.csv(final_yearly_chief_officer, "chief_officer_by_ethnicity_by_year.csv")
+```
+
+
+
+# Unused code
+
+Below are the code blocks that I did not end up using in the analysis. Some of the challenges I was able to solve by going back to the original data.
+
+#Selecting chief officer and chief supertintendent columns
+
+The data is much cleaner now meaning we can continue with our analysis. The angle for this script is looking at the number of ethnic minority **chief officers** since 2003. This is compared to white chief officers. We are exploring the hypothesis that there has been a lack of BAME officers at the most senior levels stretching back the early 2000s. Remember to make the variable name something relevant and easy to find.
+
+As ranks go, the top two we are wanting are **Chief Officer and Chief Superintendent**
+
+```{r}
+#Activate the library
+#library(dplyr)
+
+#Check the different ranks
+#unique(raw_ethnicity_rank_2003_to_2021$rank)
+
+#Removing the lower ranks
+#senior_ranks <- subset(raw_ethnicity_rank_2003_to_2021, rank!="Chief Inspector" & rank!="Constable" & rank!="Inspector" & rank!="Sergeant" & rank!="Superintendent") 
+
+#senior_ranks
+```
+
+# Analysing even further
+
+The senior_ranks dataframe is useful to move away from at this point. It has narrowed the data down but we can go even further. For those wanting to look at the top-two ranks, then now would be a good time to export the file and look at the data elsewhere. We are going to continue and just look at the numbers for Chief Officers.
+
+```{r}
+#Removing chief superintendent
+#library(dplyr)
+#chief_officer_rank <- subset(senior_ranks, rank!="Chief Superintendent")
+
+#chief_officer_rank
+```
+
+## Calculating sum by year
+
+*Ignore this code - I was having issues with getting the figures by year so if it failed, this code below would have produced the same results. But, there was a much more efficient way of doing things.*
+
+```{r}
+chief_officer_rank %>%
+  filter(date == "2003") %>%
+  group_by(ethnicity) %>%
+  summarise(yearly_sum_2003 = sum(total_headcount_full_time))
+
+chief_officer_rank %>%
+  filter(date == "2004") %>%
+  group_by(ethnicity) %>%
+  summarise(yearly_sum_2004 = sum(total_headcount_full_time))
+
+chief_officer_rank %>%
+  filter(date == "2005") %>%
+  group_by(ethnicity) %>%
+  summarise(yearly_sum_2005 = sum(total_headcount_full_time))
+
+chief_officer_rank %>%
+  filter(date == "2006") %>%
+  group_by(ethnicity) %>%
+  summarise(yearly_sum_2006 = sum(total_headcount_full_time))
+
+```
+
+
+
+
+
+
+
+
+
+
+
